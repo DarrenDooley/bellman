@@ -1,0 +1,76 @@
+openapi: 3.0.0
+info:
+  title: Exchange Data API
+  description: API to fetch exchange data for trading symbols
+  version: 1.0.0
+servers:
+  - url: https://md7i6xf0v0.execute-api.eu-west-1.amazonaws.com/dev
+paths:
+  /trading/{exchange}/{symbol}:
+    get:
+      summary: Fetch exchange data
+      description: Retrieves trading data for a specific symbol from the specified exchange
+      parameters:
+        - name: exchange
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [binance]
+          description: The exchange label
+        - name: symbol
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The trading symbol (e.g., BTC-USDT)
+        - name: X-Bypass-Cache
+          in: header
+          required: false
+          schema:
+            type: string
+            enum: [true, false]
+          description: Whether to bypass the cache and fetch fresh data
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExchangeData'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    ExchangeData:
+      type: object
+      properties:
+        exchange_label:
+          type: string
+        symbol_label:
+          type: string
+        exchange:
+          type: string
+        symbol:
+          type: string
+        tick_size:
+          type: string
+        min_price:
+          type: string
+        max_price:
+          type: string
+    Error:
+      type: object
+      properties:
+        error:
+          type: string

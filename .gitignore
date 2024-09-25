@@ -43,4 +43,3 @@ node_modules/
 # Serverless Framework
 .vscode/
 .requirements.zip
-swagger.yml
