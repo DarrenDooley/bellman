@@ -1,0 +1,76 @@
+service: bellman
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: python3.11
+  stage: dev
+  region: eu-west-1
+  environment:
+    DYNAMODB_TABLE: bellman-dev
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource: "arn:aws:dynamodb:eu-west-1:*:table/${self:provider.environment.DYNAMODB_TABLE}"
+
+functions:
+  getTradingData:
+    handler: src.main.lambda_handler
+    events:
+      - http:
+          path: trading/{exchange}/{symbol}
+          method: get
+          cors: true
+          request:
+            parameters:
+              paths:
+                exchange: true
+                symbol: true
+    timeout: 6
+
+resources:
+  Resources:
+    InstrumentsTableV2:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: exchange_label
+            AttributeType: S
+          - AttributeName: symbol_label
+            AttributeType: S
+        KeySchema:
+          - AttributeName: exchange_label
+            KeyType: HASH
+          - AttributeName: symbol_label
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:provider.environment.DYNAMODB_TABLE}
+
+
+custom:
+  pythonRequirements:
+      useStaticCache: false
+      useDownloadCache: false
+      pipCmdExtraArgs:
+        - "--platform manylinux2014_x86_64"
+        - "--implementation cp" 
+        - "--python-version 3.11"
+        - "--only-binary=:all:"
+        - "--upgrade"
+
+package:
+  exclude:
+    - '**/*'
+  include:
+    - '**/*.py'
+
+plugins:
+  - serverless-python-requirements
